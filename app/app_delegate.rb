@@ -4,12 +4,15 @@ class AppDelegate
     true
   end
 
-  THREADS = 10
+  THREADS = 20
   SET_PROB = 0.5
   NIL_PROB = 0.5
+  LOCK_GET = false
+  LOCK_SET = false
 
   def run_test
     puts "starting test"
+    @lock = Mutex.new
     THREADS.times do
       Dispatch::Queue.concurrent.async do
         loop do
@@ -24,10 +27,18 @@ class AppDelegate
   end
 
   def do_set
-    @ivar = rand < NIL_PROB ? nil : ["#{rand}"]
+    if LOCK_SET
+      @lock.synchronize {@ivar = rand < NIL_PROB ? nil : ["#{rand}"]}
+    else
+      @ivar = rand < NIL_PROB ? nil : ["#{rand}"]
+    end
   end
 
   def do_get
-    "@ivar: #{@ivar}"
+    if LOCK_GET
+      @lock.synchronize {"@ivar: #{@ivar}"}
+    else
+      "@ivar: #{@ivar}"
+    end
   end
 end
